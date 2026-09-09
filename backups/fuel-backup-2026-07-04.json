@@ -1,0 +1,70 @@
+{
+  "exportedAt": "2026-07-04T21:27:43.258Z",
+  "days": {
+    "2026-07-04": {
+      "log": [],
+      "exercise": []
+    },
+    "2026-07-03": {
+      "log": [
+        {
+          "name": "Chicken Bowl",
+          "cal": 550,
+          "pro": 48,
+          "carb": 50,
+          "fat": 12,
+          "thumb": null,
+          "emoji": "🍽️",
+          "time": "2026-07-04T21:26:19.497Z"
+        }
+      ],
+      "exercise": [
+        {
+          "name": "Running",
+          "duration": 30,
+          "intensityLabel": "Hard",
+          "burn": 320,
+          "time": "2026-07-04T21:26:19.497Z"
+        }
+      ]
+    },
+    "2026-07-02": {
+      "log": [
+        {
+          "name": "Big Mac + Fries",
+          "cal": 1040,
+          "pro": 32,
+          "carb": 111,
+          "fat": 53,
+          "thumb": null,
+          "emoji": "🍔",
+          "time": "2026-07-04T21:26:19.497Z"
+        }
+      ],
+      "exercise": []
+    }
+  },
+  "recipes": [],
+  "weights": [],
+  "settings": {
+    "units": "lbs",
+    "profile": {
+      "age": null,
+      "sex": "male",
+      "height": null,
+      "activityLevel": "moderate"
+    },
+    "preferences": "",
+    "goals": {
+      "cal": 1850,
+      "pro": 150,
+      "carb": 180,
+      "fat": 55
+    },
+    "goalType": "lose",
+    "userWeight": {
+      "start": null,
+      "goal": null
+    }
+  }
+}

@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Fuel — Your AI Health Companion</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0f0f0f" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Fuel" />
+</head>
+<body>
+
+  <header>
+    <div class="logo">fuel.</div>
+    <div class="header-right">
+      <div class="streak" id="streak" style="display:none;"></div>
+      <div class="avatar">J</div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ═══════════ LOG PAGE ═══════════ -->
+    <div class="page active" id="page-log">
+      <div class="daily-bar">
+        <h2>Today's nutrition</h2>
+        <div class="macro-row">
+          <div class="macro-pill cal"><div class="val" id="today-cal">0</div><div class="lbl">Eaten</div></div>
+          <div class="macro-pill pro"><div class="val" id="today-pro">0g</div><div class="lbl">Protein</div></div>
+          <div class="macro-pill carb"><div class="val" id="today-carb">0g</div><div class="lbl">Carbs</div></div>
+          <div class="macro-pill fat"><div class="val" id="today-fat">0g</div><div class="lbl">Fat</div></div>
+        </div>
+        <div id="exercise-summary-row" style="display:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); display:flex; gap:12px; align-items:center;">
+          <span style="font-size:12px; color:var(--orange);">🔥 <span id="today-burned">0</span> cal burned</span>
+          <span style="font-size:12px; color:var(--text2);">→</span>
+          <span style="font-size:12px; color:var(--accent);">Budget: <strong id="today-budget">1,850</strong> kcal</span>
+        </div>
+        <div class="goal-bar-wrap">
+          <div class="goal-bar-label"><span id="goal-bar-label-left">Calorie goal</span><span id="goal-pct">0 / 1,850 kcal</span></div>
+          <div class="goal-bar"><div class="goal-bar-fill" id="goal-bar-fill" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <div class="section-title">Log a <span>Meal or Drink</span></div>
+
+      <!-- Tab switcher -->
+      <div class="log-tabs">
+        <div class="log-tab active" onclick="switchLogTab('photo', this)">📸 Snap</div>
+        <div class="log-tab" onclick="switchLogTab('manual', this)">✏️ Manual</div>
+        <div class="log-tab" onclick="switchLogTab('exercise', this)">🏃 Exercise</div>
+      </div>
+
+      <!-- Photo tab -->
+      <div id="log-tab-photo">
+        <div class="upload-card">
+          <div class="photo-grid">
+            <div class="photo-slot" id="slot-0" onclick="triggerUpload(0)"><div class="plus-icon">+</div><div class="slot-label">Photo 1</div></div>
+            <div class="photo-slot" id="slot-1" onclick="triggerUpload(1)"><div class="plus-icon">+</div><div class="slot-label">Photo 2</div></div>
+            <div class="photo-slot" id="slot-2" onclick="triggerUpload(2)"><div class="plus-icon">+</div><div class="slot-label">Photo 3</div></div>
+          </div>
+          <input type="file" id="file-input-0" accept="image/*" capture="environment" onchange="handleFile(0,this)">
+          <input type="file" id="file-input-1" accept="image/*" capture="environment" onchange="handleFile(1,this)">
+          <input type="file" id="file-input-2" accept="image/*" capture="environment" onchange="handleFile(2,this)">
+          <textarea class="note-input" id="meal-note" rows="2" placeholder="Optional: 'Made 4 burritos from this batch' or 'Used about 2 cups milk'"></textarea>
+          <button class="analyze-btn" id="analyze-btn" onclick="analyzePhotos()"><span>🔍</span> Analyze Meal</button>
+        </div>
+
+        <div class="loading-card" id="loading-card">
+          <div class="spinner"></div>
+          <div class="loading-text">Analyzing your meal...</div>
+          <div class="loading-subtext">Estimating ingredients &amp; macros</div>
+        </div>
+
+        <div class="result-card" id="result-card">
+          <div class="result-header">
+            <div class="result-title" id="result-title">Meal Name</div>
+            <div class="confidence-badge" id="result-confidence">~85% confidence</div>
+          </div>
+          <div class="result-desc" id="result-desc"></div>
+          <div class="result-macros">
+            <div class="result-macro-box rcal"><div class="rval" id="r-cal">0</div><div class="rlbl">Calories</div></div>
+            <div class="result-macro-box rpro"><div class="rval" id="r-pro">0g</div><div class="rlbl">Protein</div></div>
+            <div class="result-macro-box rcarb"><div class="rval" id="r-carb">0g</div><div class="rlbl">Carbs</div></div>
+            <div class="result-macro-box rfat"><div class="rval" id="r-fat">0g</div><div class="rlbl">Fat</div></div>
+          </div>
+          <div class="result-ingredients" id="result-ingredients"></div>
+          <button class="log-btn" onclick="logMeal()">＋ Add to Today's Log</button>
+        </div>
+      </div>
+
+      <!-- Manual tab -->
+      <div id="log-tab-manual" style="display:none">
+        <div class="manual-card">
+          <!-- Quick add -->
+          <div class="quick-add-section" id="favorites-wrap" style="display:none;">
+            <div class="quick-add-label">★ Favorites</div>
+            <div id="favorites-list"></div>
+          </div>
+          <div class="quick-add-section" id="recent-wrap" style="display:none;">
+            <div class="quick-add-label">Recent</div>
+            <div id="recent-list"></div>
+          </div>
+
+          <!-- Search -->
+          <div style="font-size:13px; color:var(--text2); margin-bottom:10px;">Search for a food or restaurant item:</div>
+          <div class="search-row">
+            <input type="text" class="search-input" id="search-input" placeholder="e.g. Crunchwrap Supreme, Diet Coke, banana..." onkeydown="if(event.key==='Enter') searchFood()" />
+            <button class="search-btn" onclick="searchFood()">Search</button>
+          </div>
+          <button class="secondary-btn" style="margin-bottom:16px;" onclick="openBarcodeScanner()">📷 Scan Barcode</button>
+
+          <div id="search-results" class="search-results"></div>
+
+          <div class="manual-divider">or enter manually</div>
+
+          <!-- Manual entry form -->
+          <div class="manual-form">
+            <div>
+              <div class="manual-input-label">Meal or drink name</div>
+              <input type="text" class="manual-input" id="manual-name" placeholder="e.g. Taco Bell Crunchwrap Supreme" />
+            </div>
+            <div>
+              <div class="manual-input-label">Serving size / notes (optional)</div>
+              <input type="text" class="manual-input" id="manual-serving" placeholder="e.g. 1 wrap, 20 fl oz, large" />
+            </div>
+            <div class="manual-form-row">
+              <div class="manual-field">
+                <div class="manual-input-label">Calories</div>
+                <input type="number" class="manual-input" id="manual-cal" placeholder="0" min="0" />
+              </div>
+              <div class="manual-field">
+                <div class="manual-input-label">Protein (g)</div>
+                <input type="number" class="manual-input" id="manual-pro" placeholder="0" min="0" />
+              </div>
+            </div>
+            <div class="manual-form-row">
+              <div class="manual-field">
+                <div class="manual-input-label">Carbs (g)</div>
+                <input type="number" class="manual-input" id="manual-carb" placeholder="0" min="0" />
+              </div>
+              <div class="manual-field">
+                <div class="manual-input-label">Fat (g)</div>
+                <input type="number" class="manual-input" id="manual-fat" placeholder="0" min="0" />
+              </div>
+            </div>
+            <button class="primary-btn" onclick="logManual()">＋ Add to Today's Log</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Exercise tab -->
+      <div id="log-tab-exercise" style="display:none">
+        <div class="exercise-card">
+          <div style="font-size:13px; color:var(--text2); margin-bottom:12px;">What activity did you do?</div>
+          <div class="activity-grid" id="activity-grid">
+            <div class="activity-btn" onclick="selectActivity(this,'Hockey',7.5)"><div class="activity-icon">🏒</div>Hockey</div>
+            <div class="activity-btn" onclick="selectActivity(this,'Pickleball',6.0)"><div class="activity-icon">🏓</div>Pickleball</div>
+            <div class="activity-btn" onclick="selectActivity(this,'Running',9.0)"><div class="activity-icon">🏃</div>Running</div>
+            <div class="activity-btn" onclick="selectActivity(this,'Walking',3.5)"><div class="activity-icon">🚶</div>Walking</div>
+            <div class="activity-btn" onclick="selectActivity(this,'Cycling',7.0)"><div class="activity-icon">🚴</div>Cycling</div>
+            <div class="activity-btn" onclick="selectActivity(this,'Lifting',5.0)"><div class="activity-icon">🏋️</div>Lifting</div>
+            <div class="activity-btn" onclick="selectActivity(this,'Basketball',6.5)"><div class="activity-icon">🏀</div>Basketball</div>
+            <div class="activity-btn" onclick="selectActivity(this,'Swimming',7.0)"><div class="activity-icon">🏊</div>Swimming</div>
+            <div class="activity-btn" onclick="selectActivity(this,'Yoga / Stretch',2.5)"><div class="activity-icon">🧘</div>Yoga</div>
+            <div class="activity-btn" onclick="selectActivity(this,'Soccer',7.0)"><div class="activity-icon">⚽</div>Soccer</div>
+            <div class="activity-btn" onclick="selectActivity(this,'Golf',4.0)"><div class="activity-icon">⛳</div>Golf</div>
+            <div class="activity-btn" onclick="selectActivity(this,'Other',5.0)"><div class="activity-icon">⚡</div>Other</div>
+          </div>
+
+          <!-- Custom activity input (shown when Other is selected) -->
+          <div id="custom-activity-wrap" style="display:none; margin-bottom:16px;">
+            <div style="font-size:13px; color:var(--text2); margin-bottom:8px;">What did you do?</div>
+            <input type="text" id="custom-activity-input" class="search-input" placeholder="e.g. Rock climbing, Tennis, Frisbee golf..." oninput="updateBurnPreview()" style="width:100%;" />
+            <div style="font-size:11px; color:var(--text2); margin-top:6px;">Use the intensity selector below to calibrate the burn estimate.</div>
+          </div>
+
+          <div style="font-size:13px; color:var(--text2); margin-bottom:8px;">Intensity</div>
+          <div class="intensity-row">
+            <div class="intensity-btn intensity-light" onclick="selectIntensity(this,0.7)">😌<br>Light</div>
+            <div class="intensity-btn intensity-moderate active" onclick="selectIntensity(this,1.0)">🙂<br>Moderate</div>
+            <div class="intensity-btn intensity-hard" onclick="selectIntensity(this,1.35)">😤<br>Hard</div>
+            <div class="intensity-btn intensity-intense" onclick="selectIntensity(this,1.75)">🔥<br>Intense</div>
+          </div>
+
+          <div style="font-size:13px; color:var(--text2); margin-bottom:8px;">Duration</div>
+          <div class="duration-row">
+            <input type="number" class="duration-input" id="duration-input" value="60" min="5" max="480" oninput="updateBurnPreview()" />
+            <div class="duration-label">minutes</div>
+            <div style="display:flex; gap:6px; margin-left:auto;">
+              <button class="outline-btn" onclick="setDuration(30)">30m</button>
+              <button class="outline-btn" onclick="setDuration(60)">1h</button>
+              <button class="outline-btn" onclick="setDuration(90)">90m</button>
+            </div>
+          </div>
+
+          <div class="burn-preview" id="burn-preview">
+            <div class="burn-preview-left">
+              <div class="bpl">Estimated burn</div>
+              <div class="burn-preview-val" id="burn-val">—</div>
+              <div class="burn-preview-note" id="burn-note">Select an activity above</div>
+            </div>
+            <div style="font-size:32px;">🔥</div>
+          </div>
+
+          <button class="log-exercise-btn" onclick="logExercise()">＋ Log Exercise</button>
+        </div>
+
+        <div class="section-title" id="exercise-section-title" style="display:none">Exercise <span>Today</span></div>
+        <div id="exercise-feed"></div>
+      </div>
+
+      <!-- Log feed -->
+      <div class="section-title" id="log-section-title" style="display:none">Food <span>Today</span></div>
+      <div class="log-feed" id="log-feed"></div>
+    </div>
+
+    <!-- ═══════════ MEALS PAGE ═══════════ -->
+    <div class="page" id="page-meals">
+      <div class="section-title">Meal <span>Ideas</span></div>
+      <div class="pref-row">
+        <input type="text" class="pref-input" id="meal-pref-input" placeholder="Allergies, dislikes, requests (e.g. no peanuts, high protein)..." />
+        <button class="gen-btn" id="gen-meals-btn" onclick="generateMeals()">✦ Generate</button>
+      </div>
+      <div class="meal-filters">
+        <div class="filter-chip active" onclick="filterMeals('all', this)">All</div>
+        <div class="filter-chip" onclick="filterMeals('breakfast', this)">Breakfast</div>
+        <div class="filter-chip" onclick="filterMeals('lunch', this)">Lunch</div>
+        <div class="filter-chip" onclick="filterMeals('dinner', this)">Dinner</div>
+        <div class="filter-chip" onclick="filterMeals('snack', this)">Snack</div>
+      </div>
+      <div id="meals-loading" class="loading-card">
+        <div class="spinner"></div>
+        <div class="loading-text">Generating meal ideas...</div>
+        <div class="loading-subtext">Tailored to your goals &amp; preferences</div>
+      </div>
+      <div id="meals-list"></div>
+      <div id="meals-empty" class="empty-state">
+        <div class="es-icon">🍽️</div>
+        <p>Hit <strong style="color:var(--accent)">Generate</strong> to get AI-powered meal ideas with macros, grocery lists, and step-by-step instructions.</p>
+      </div>
+
+      <!-- Combined grocery list -->
+      <div class="goal-setup-card" id="grocery-list-wrap" style="display:none; margin-top:20px;"></div>
+    </div>
+
+    <!-- ═══════════ RECIPE BOOK ═══════════ -->
+    <div class="page" id="page-recipes">
+      <div class="section-title">Recipe <span>Book</span></div>
+
+      <button class="secondary-btn" style="margin-bottom:16px;" onclick="toggleRecipeForm()">+ New Recipe</button>
+
+      <div class="goal-setup-card" id="recipe-form-card" style="display:none; margin-bottom:16px;">
+        <div class="goal-card-title" id="recipe-form-title">New Recipe</div>
+        <div class="settings-row-2">
+          <div class="settings-field" style="flex:2;">
+            <div class="setup-label">Name</div>
+            <input type="text" class="setup-input" id="rf-name" placeholder="e.g. Turkey Chili" />
+          </div>
+          <div class="settings-field">
+            <div class="setup-label">Category</div>
+            <select class="setup-select" id="rf-category">
+              <option value="breakfast">Breakfast</option>
+              <option value="lunch">Lunch</option>
+              <option value="dinner">Dinner</option>
+              <option value="snack">Snack</option>
+            </select>
+          </div>
+        </div>
+        <div class="macro-target-row">
+          <div class="macro-target-field"><div class="setup-label">Calories</div><input type="number" class="setup-input" id="rf-cal" placeholder="0" /></div>
+          <div class="macro-target-field"><div class="setup-label">Protein (g)</div><input type="number" class="setup-input" id="rf-pro" placeholder="0" /></div>
+        </div>
+        <div class="macro-target-row">
+          <div class="macro-target-field"><div class="setup-label">Carbs (g)</div><input type="number" class="setup-input" id="rf-carb" placeholder="0" /></div>
+          <div class="macro-target-field"><div class="setup-label">Fat (g)</div><input type="number" class="setup-input" id="rf-fat" placeholder="0" /></div>
+        </div>
+        <div class="setup-input-group">
+          <div class="setup-label">Yield (optional)</div>
+          <input type="text" class="setup-input" id="rf-yield" placeholder="e.g. 1 serving" />
+        </div>
+        <div class="setup-input-group">
+          <div class="setup-label">Ingredients (one per line)</div>
+          <textarea class="note-input" id="rf-ingredients" rows="4" placeholder="6 oz chicken breast&#10;1 cup rice&#10;..."></textarea>
+        </div>
+        <div class="setup-input-group">
+          <div class="setup-label">Steps (one per line)</div>
+          <textarea class="note-input" id="rf-steps" rows="4" placeholder="Season chicken&#10;Grill 6 min per side&#10;..."></textarea>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="primary-btn" style="flex:1;" onclick="saveRecipeForm()">Save Recipe</button>
+          <button class="secondary-btn" style="flex:1;" onclick="toggleRecipeForm()">Cancel</button>
+        </div>
+      </div>
+
+      <div class="category-tabs" id="recipe-tabs">
+        <div class="cat-tab active" onclick="filterRecipes('all', this)">All</div>
+        <div class="cat-tab" onclick="filterRecipes('breakfast', this)">Breakfast</div>
+        <div class="cat-tab" onclick="filterRecipes('lunch', this)">Lunch</div>
+        <div class="cat-tab" onclick="filterRecipes('dinner', this)">Dinner</div>
+        <div class="cat-tab" onclick="filterRecipes('snack', this)">Snack</div>
+      </div>
+      <div id="recipe-list"></div>
+      <div id="recipe-empty" class="empty-state">
+        <div class="es-icon">📖</div>
+        <p>Recipes you save from <strong style="color:var(--accent)">Meal Ideas</strong> will appear here — organized with instructions and grocery lists.</p>
+      </div>
+    </div>
+
+    <!-- ═══════════ PROGRESS PAGE ═══════════ -->
+    <div class="page" id="page-progress">
+      <div class="section-title">Progress <span>&amp; Goals</span></div>
+
+      <!-- Goal setup -->
+      <div class="goal-setup-card">
+        <div class="goal-card-title">🎯 My Goal</div>
+        <div class="goal-type-row">
+          <div class="goal-type-btn active" id="gtype-lose" onclick="setGoalType('lose', this)">Lose Weight</div>
+          <div class="goal-type-btn" id="gtype-maintain" onclick="setGoalType('maintain', this)">Maintain</div>
+          <div class="goal-type-btn" id="gtype-track" onclick="setGoalType('track', this)">Just Track</div>
+        </div>
+        <div id="weight-goal-fields">
+          <div class="setup-input-group">
+            <div class="setup-label">Current weight (<span class="weight-unit-label">lbs</span>)</div>
+            <input type="number" class="setup-input" id="setup-current" placeholder="e.g. 200" oninput="updateGoals()" />
+          </div>
+          <div class="setup-input-group" id="goal-weight-field">
+            <div class="setup-label">Goal weight (<span class="weight-unit-label">lbs</span>)</div>
+            <input type="number" class="setup-input" id="setup-goal" placeholder="e.g. 170" oninput="updateGoals()" />
+          </div>
+        </div>
+        <div class="goal-card-title" style="margin-top:14px; margin-bottom:12px;">Daily Macro Targets</div>
+        <div class="macro-target-row">
+          <div class="macro-target-field"><div class="setup-label">Calories</div><input type="number" class="setup-input" id="target-cal" value="1850" oninput="updateGoals()" /></div>
+          <div class="macro-target-field"><div class="setup-label">Protein (g)</div><input type="number" class="setup-input" id="target-pro" value="150" oninput="updateGoals()" /></div>
+        </div>
+        <div class="macro-target-row">
+          <div class="macro-target-field"><div class="setup-label">Carbs (g)</div><input type="number" class="setup-input" id="target-carb" value="180" oninput="updateGoals()" /></div>
+          <div class="macro-target-field"><div class="setup-label">Fat (g)</div><input type="number" class="setup-input" id="target-fat" value="55" oninput="updateGoals()" /></div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stat-row" id="weight-stats">
+        <div class="stat-box"><div class="sv" id="stat-current" style="color:var(--blue)">—</div><div class="sl">Current (<span class="weight-unit-label">lbs</span>)</div></div>
+        <div class="stat-box"><div class="sv" id="stat-goal-display" style="color:var(--orange)">—</div><div class="sl">Goal (<span class="weight-unit-label">lbs</span>)</div></div>
+        <div class="stat-box"><div class="sv" id="stat-lost" style="color:var(--accent)">0</div><div class="sl"><span class="weight-unit-label">Lbs</span> lost</div></div>
+        <div class="stat-box"><div class="sv" id="stat-to-go" style="color:var(--red)">—</div><div class="sl"><span class="weight-unit-label">Lbs</span> to go</div></div>
+      </div>
+
+      <div class="goal-card" id="progress-bar-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;"><span style="font-size:13px; color:var(--text2)">Progress to goal</span><span style="font-size:18px; font-weight:700;" id="progress-pct">0%</span></div>
+        <div class="goal-bar2"><div class="goal-bar2-fill" id="progress-bar" style="width:0%"></div></div>
+        <div style="font-size:12px; color:var(--text2); margin-top:8px;" id="progress-note">Set your goal weight above to track progress</div>
+      </div>
+
+      <!-- Weight log -->
+      <div style="font-size:16px; font-weight:700; margin-bottom:12px;">Log Today's Weight</div>
+      <div class="weight-log-row">
+        <input type="number" class="weight-input" id="weight-entry" placeholder="e.g. 198.5" step="0.1" min="20" max="500" />
+        <button class="log-weight-btn" onclick="logWeight()">Log</button>
+      </div>
+
+      <!-- Chart -->
+      <div class="weight-chart">
+        <div style="font-size:14px; font-weight:700; margin-bottom:12px;">Weight Over Time</div>
+        <div class="chart-area" id="weight-chart-area">
+          <div class="empty-state" style="flex:1; padding:10px 0;"><p>Log your weight to see your chart here.</p></div>
+        </div>
+      </div>
+
+      <!-- Macro targets recap -->
+      <div class="goal-card">
+        <div class="goal-card-title">Daily Macro Targets</div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text2); margin-bottom:4px;"><span>Calories</span><span id="recap-cal">1,850 kcal</span></div>
+            <div class="goal-bar"><div class="goal-bar-fill" style="width:100%;"></div></div>
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text2); margin-bottom:4px;"><span>Protein</span><span id="recap-pro">150g</span></div>
+            <div class="goal-bar"><div class="goal-bar-fill" style="width:100%; background: linear-gradient(90deg, #1a6bb5, var(--blue));"></div></div>
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text2); margin-bottom:4px;"><span>Carbs</span><span id="recap-carb">180g</span></div>
+            <div class="goal-bar"><div class="goal-bar-fill" style="width:100%; background: linear-gradient(90deg, #c47a1a, var(--orange));"></div></div>
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text2); margin-bottom:4px;"><span>Fat</span><span id="recap-fat">55g</span></div>
+            <div class="goal-bar"><div class="goal-bar-fill" style="width:100%; background: linear-gradient(90deg, #b54040, var(--red));"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly summary -->
+      <div class="section-title" style="margin-top:20px;">This <span>Week</span></div>
+      <div id="weekly-summary"></div>
+
+      <!-- History -->
+      <div class="section-title" style="margin-top:20px;">Your <span>History</span></div>
+      <div id="history-list"></div>
+      <div id="history-empty" class="empty-state">
+        <div class="es-icon">📅</div>
+        <p>Past days will show up here once you've logged for more than one day.</p>
+      </div>
+    </div>
+
+    <!-- ═══════════ SETTINGS PAGE ═══════════ -->
+    <div class="page" id="page-settings">
+      <div class="section-title">Settings <span>&amp; Profile</span></div>
+
+      <div class="goal-setup-card settings-section">
+        <div class="settings-section-title">🔑 Claude API Key</div>
+        <div class="settings-section-desc" id="api-key-desc">Needed for real photo analysis and AI meal ideas. Without one, the app runs in demo mode with sample data. Your key is stored only in this browser.</div>
+        <div class="api-key-row">
+          <input type="password" class="setup-input" id="settings-api-key" placeholder="sk-ant-..." />
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="primary-btn" id="save-api-key-btn" style="flex:1;" onclick="saveApiKey()">Save Key</button>
+          <button class="secondary-btn" style="flex:1;" onclick="testConnection()">Test Connection</button>
+        </div>
+        <div class="connection-status" id="connection-status"></div>
+      </div>
+
+      <div class="goal-setup-card settings-section">
+        <div class="settings-section-title">🥕 Food Database (USDA)</div>
+        <div class="settings-section-desc">Powers food search in the Manual tab beyond the built-in list — thousands of branded and restaurant items. Free forever. Get an instant key at <strong>api.data.gov/signup</strong>, then paste it below.</div>
+        <div class="api-key-row">
+          <input type="password" class="setup-input" id="settings-usda-key" placeholder="Paste your USDA API key" />
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="primary-btn" style="flex:1;" onclick="saveUsdaKey()">Save Key</button>
+          <button class="secondary-btn" style="flex:1;" onclick="testUsdaConnection()">Test Connection</button>
+        </div>
+        <div class="connection-status" id="usda-connection-status"></div>
+      </div>
+
+      <div class="goal-setup-card settings-section">
+        <div class="settings-section-title">📏 Units</div>
+        <div class="units-row">
+          <div class="unit-btn active" id="unit-lbs" onclick="setUnits('lbs', this)">lbs</div>
+          <div class="unit-btn" id="unit-kg" onclick="setUnits('kg', this)">kg</div>
+        </div>
+      </div>
+
+      <div class="goal-setup-card settings-section">
+        <div class="settings-section-title">👤 Profile</div>
+        <div class="settings-section-desc">Used to calculate a real calorie and protein target for you (Mifflin-St Jeor) instead of a generic guess.</div>
+        <div class="settings-row-2">
+          <div class="settings-field">
+            <div class="setup-label">Age</div>
+            <input type="number" class="setup-input" id="profile-age" placeholder="e.g. 21" />
+          </div>
+          <div class="settings-field">
+            <div class="setup-label">Sex</div>
+            <select class="setup-select" id="profile-sex">
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+        </div>
+        <div class="settings-row-2">
+          <div class="settings-field">
+            <div class="setup-label" id="profile-height-label">Height (inches)</div>
+            <input type="number" class="setup-input" id="profile-height" placeholder="e.g. 70" />
+          </div>
+          <div class="settings-field">
+            <div class="setup-label">Activity level</div>
+            <select class="setup-select" id="profile-activity">
+              <option value="sedentary">Sedentary</option>
+              <option value="light">Light exercise</option>
+              <option value="moderate">Moderate exercise</option>
+              <option value="active">Active</option>
+              <option value="very_active">Very active</option>
+            </select>
+          </div>
+        </div>
+        <div style="font-size:11px; color:var(--text2); margin-bottom:12px;">Uses your current weight from the Progress tab.</div>
+        <button class="primary-btn" onclick="calculateTDEEAndSetGoals()">Calculate My Goals</button>
+      </div>
+
+      <div class="goal-setup-card settings-section">
+        <div class="settings-section-title">🥗 Dietary Preferences</div>
+        <div class="settings-section-desc">Saved once — applied automatically every time you generate meal ideas, so you don't have to retype it.</div>
+        <input type="text" class="setup-input" id="settings-preferences" placeholder="e.g. no peanuts, dairy-free, high protein" oninput="updatePreferences()" />
+      </div>
+
+      <div class="goal-setup-card settings-section">
+        <div class="settings-section-title">💾 Backup Your Data</div>
+        <div class="settings-section-desc">Everything lives only in this browser's storage — nothing is backed up anywhere else. Download a backup occasionally so you don't lose your history if you clear browser data or switch devices.</div>
+        <button class="secondary-btn" onclick="exportData()">⬇ Download Backup (.json)</button>
+        <div class="settings-section-desc" style="margin-top:14px;">Restoring merges the backup in — anything already on this device is never overwritten, only filled in with what's missing.</div>
+        <button class="secondary-btn" onclick="triggerRestore()">⬆ Restore from Backup</button>
+        <input type="file" id="restore-file-input" accept=".json,application/json" onchange="handleRestoreFile(this)">
+      </div>
+    </div>
+
+  </main>
+
+  <nav>
+    <button class="nav-item active" onclick="switchPage('log', this)"><div class="nav-icon">📸</div><div class="nav-label">Log</div></button>
+    <button class="nav-item" onclick="switchPage('meals', this)"><div class="nav-icon">🍽️</div><div class="nav-label">Meals</div></button>
+    <button class="nav-item" onclick="switchPage('recipes', this)"><div class="nav-icon">📖</div><div class="nav-label">Recipes</div></button>
+    <button class="nav-item" onclick="switchPage('progress', this)"><div class="nav-icon">📈</div><div class="nav-label">Progress</div></button>
+    <button class="nav-item" onclick="switchPage('settings', this)"><div class="nav-icon">⚙️</div><div class="nav-label">Settings</div></button>
+  </nav>
+  <div class="toast" id="toast"></div>
+
+  <div id="barcode-scanner-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:300; flex-direction:column; align-items:center; justify-content:center; padding:20px;">
+    <video id="barcode-video" style="width:100%; max-width:400px; border-radius:12px; background:#000;" playsinline muted></video>
+    <div id="barcode-status" style="color:#fff; margin-top:16px; font-size:14px; text-align:center;">Requesting camera access...</div>
+    <button class="secondary-btn" style="margin-top:20px; max-width:200px;" onclick="closeBarcodeScanner()">Cancel</button>
+  </div>
+
+  <script src="js/state.js?v=8"></script>
+  <script src="js/api.js?v=8"></script>
+  <script src="js/ui.js?v=8"></script>
+  <script src="js/log.js?v=8"></script>
+  <script src="js/meals.js?v=8"></script>
+  <script src="js/recipes.js?v=8"></script>
+  <script src="js/progress.js?v=8"></script>
+  <script src="js/settings.js?v=8"></script>
+  <script src="js/barcode.js?v=8"></script>
+  <script src="js/main.js?v=8"></script>
+</body>
+</html>
